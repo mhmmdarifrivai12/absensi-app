@@ -30,14 +30,15 @@ router.post('/classes', verifyToken, isAdmin, (req, res) => {
     });
 });
 
-// ✅ Mendapatkan daftar kelas
-router.get('/classes', verifyToken, isAdmin, (req, res) => {
+// ✅ Mendapatkan daftar kelas tanpa verifikasi token atau admin
+router.get('/classes', (req, res) => {
     Class.getAllClasses((err, results) => {
         if (err) return res.status(500).json({ message: 'Gagal mengambil daftar kelas', error: err });
 
         res.status(200).json({ classes: results });
     });
 });
+
 
 
 // ✅ Menambahkan mata pelajaran baru
