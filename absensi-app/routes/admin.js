@@ -1,6 +1,6 @@
 const express = require('express');
 const db = require('../config/db');
-const { verifyToken, isAdmin } = require('../middleware/auth');
+const { verifyToken, isAdmin, isGuru } = require('../middleware/auth');
 const Class = require('../models/class');
 const Subject = require('../models/subject');
 const TeacherSubject = require('../models/teacherSubject');
@@ -39,6 +39,40 @@ router.get('/classes', (req, res) => {
     });
 });
 
+// ✅ Memperbarui nama kelas
+router.put('/classes/:id', verifyToken, isAdmin, (req, res) => {
+    const classId = req.params.id;
+    const { name } = req.body;
+
+    if (!name) {
+        return res.status(400).json({ message: 'Nama kelas tidak boleh kosong' });
+    }
+
+    db.query('UPDATE classes SET name = ? WHERE id = ?', [name, classId], (err, results) => {
+        if (err) return res.status(500).json({ message: 'Gagal memperbarui kelas', error: err });
+
+        if (results.affectedRows === 0) {
+            return res.status(404).json({ message: 'Kelas tidak ditemukan' });
+        }
+
+        res.status(200).json({ message: 'Kelas berhasil diperbarui' });
+    });
+});
+
+// ✅ Menghapus kelas
+router.delete('/classes/:id', verifyToken, isAdmin, (req, res) => {
+    const classId = req.params.id;
+
+    db.query('DELETE FROM classes WHERE id = ?', [classId], (err, results) => {
+        if (err) return res.status(500).json({ message: 'Gagal menghapus kelas', error: err });
+
+        if (results.affectedRows === 0) {
+            return res.status(404).json({ message: 'Kelas tidak ditemukan' });
+        }
+
+        res.status(200).json({ message: 'Kelas berhasil dihapus' });
+    });
+});
 
 
 // ✅ Menambahkan mata pelajaran baru
@@ -65,13 +99,49 @@ router.get('/subjects', verifyToken, isAdmin, (req, res) => {
     });
 });
 
+// ✅ Memperbarui nama mata pelajaran
+router.put('/subjects/:id', verifyToken, isAdmin, (req, res) => {
+    const subjectId = req.params.id;
+    const { name } = req.body;
+
+    if (!name) {
+        return res.status(400).json({ message: 'Nama pelajaran tidak boleh kosong' });
+    }
+
+    db.query('UPDATE subjects SET name = ? WHERE id = ?', [name, subjectId], (err, results) => {
+        if (err) return res.status(500).json({ message: 'Gagal memperbarui pelajaran', error: err });
+
+        if (results.affectedRows === 0) {
+            return res.status(404).json({ message: 'Pelajaran tidak ditemukan' });
+        }
+
+        res.status(200).json({ message: 'Pelajaran berhasil diperbarui' });
+    });
+});
+
+// ✅ Menghapus mata pelajaran
+router.delete('/subjects/:id', verifyToken, isAdmin, (req, res) => {
+    const subjectId = req.params.id;
+
+    db.query('DELETE FROM subjects WHERE id = ?', [subjectId], (err, results) => {
+        if (err) return res.status(500).json({ message: 'Gagal menghapus pelajaran', error: err });
+
+        if (results.affectedRows === 0) {
+            return res.status(404).json({ message: 'Pelajaran tidak ditemukan' });
+        }
+
+        res.status(200).json({ message: 'Pelajaran berhasil dihapus' });
+    });
+});
+
+
 /**
  * ===============================
  *             SISWA
  * ===============================
  */
 // ✅ Route untuk menambahkan siswa ke dalam kelas
-router.post('/student', (req, res) => {
+router.post('/students', (req, res) => {
     const { name, nis, class_id } = req.body;
 
     // Validasi input
@@ -85,21 +155,6 @@ router.post('/student', (req, res) => {
             return res.status(500).json({ message: 'Gagal menambahkan siswa', error: err });
         }
         res.status(201).json({ message: 'Siswa berhasil ditambahkan', data: result });
-    });
-});
-
-// ✅ Menampilkan daftar siswa berdasarkan kelas tertentu (jika class_id diberikan)
-router.get('/students', verifyToken, isAdmin, (req, res) => {
-    const classId = req.query.class_id; // Ambil class_id dari query string
-
-    Student.getAllStudents((err, results) => {
-        if (err) return res.status(500).json({ message: 'Gagal mengambil daftar siswa', error: err });
-
-        if (classId) {
-            results = results.filter(student => student.class_id == classId);
-        }
-
-        res.json(results);
     });
 });
 
@@ -147,14 +202,47 @@ router.get('/classes/:class_id/students', verifyToken, isAdmin, (req, res) => {
     });
 });
 
-// ✅ Menampilkan seluruh siswa dari semua kelas
-router.get('/students', verifyToken, isAdmin, (req, res) => {
-    Student.getAllStudents((err, results) => {
-        if (err) return res.status(500).json({ message: 'Gagal mengambil daftar siswa', error: err });
+router.put('/students/:id', verifyToken, isAdmin, (req, res) => {
+    const { id } = req.params;
+    const { name, nis, class_id } = req.body;
 
-        res.json(results);
+    // Validasi input
+    if (!name || !nis || !class_id) {
+        return res.status(400).json({ message: 'Semua field wajib diisi' });
+    }
+
+    // Panggil fungsi updateStudent dari model Student
+    Student.updateStudent(id, name, nis, class_id, (err, result) => {
+        if (err) {
+            return res.status(500).json({ message: 'Gagal memperbarui data siswa', error: err });
+        }
+
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ message: 'Siswa tidak ditemukan' });
+        }
+
+        res.json({ message: 'Data siswa berhasil diperbarui', data: result });
     });
 });
+
+router.delete('/students/:id', verifyToken, isAdmin, (req, res) => {
+    const { id } = req.params;
+
+    // Panggil fungsi deleteStudent dari model Student
+    Student.deleteStudent(id, (err, result) => {
+        if (err) {
+            return res.status(500).json({ message: 'Gagal menghapus siswa', error: err });
+        }
+
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ message: 'Siswa tidak ditemukan' });
+        }
+
+        res.json({ message: 'Siswa berhasil dihapus' });
+    });
+});
+
+
 
 /**
  * ===============================
@@ -201,7 +289,7 @@ router.post('/assign-teacher', verifyToken, isAdmin, (req, res) => {
 router.get('/teachers-schedule', verifyToken, isAdmin, (req, res) => {
     const query = `
         SELECT 
-            u.username AS teacher_name, 
+            u.name AS teacher_name, 
             c.name AS class_name, 
             s.name AS subject_name,
             tcs.teaching_day, 
@@ -221,6 +309,48 @@ router.get('/teachers-schedule', verifyToken, isAdmin, (req, res) => {
     });
 });
 
+router.put('/assign-teacher/:id', verifyToken, isAdmin, (req, res) => {
+    const { id } = req.params;
+    const { teacher_id, class_id, subject_id, teaching_day, start_time, duration } = req.body;
+
+    if (!teacher_id || !class_id || !subject_id || !teaching_day || !start_time || !duration) {
+        return res.status(400).json({ message: 'Semua field wajib diisi' });
+    }
+
+    const query = `
+        UPDATE teachers_classes_subjects 
+        SET teacher_id = ?, class_id = ?, subject_id = ?, teaching_day = ?, start_time = ?, duration = ?
+        WHERE id = ?
+    `;
+
+    db.query(query, [teacher_id, class_id, subject_id, teaching_day, start_time, duration, id], (err, results) => {
+        if (err) return res.status(500).json({ message: 'Gagal memperbarui penugasan guru', error: err });
+
+        if (results.affectedRows === 0) {
+            return res.status(404).json({ message: 'Penugasan guru tidak ditemukan' });
+        }
+
+        res.json({ message: 'Penugasan guru berhasil diperbarui' });
+    });
+});
+
+router.delete('/assign-teacher/:id', verifyToken, isAdmin, (req, res) => {
+    const { id } = req.params;
+
+    const query = `DELETE FROM teachers_classes_subjects WHERE id = ?`;
+
+    db.query(query, [id], (err, results) => {
+        if (err) return res.status(500).json({ message: 'Gagal menghapus penugasan guru', error: err });
+
+        if (results.affectedRows === 0) {
+            return res.status(404).json({ message: 'Penugasan guru tidak ditemukan' });
+        }
+
+        res.json({ message: 'Penugasan guru berhasil dihapus' });
+    });
+});
+
+
 /**
  * ===============================
  *   MENAMPILKAN DAFTAR GURU
@@ -228,7 +358,7 @@ router.get('/teachers-schedule', verifyToken, isAdmin, (req, res) => {
  */
 // ✅ GET: Menampilkan semua user dengan role "guru"
 router.get('/teachers', verifyToken, isAdmin, (req, res) => {
-    const query = `SELECT id, username FROM users WHERE role = ?`;
+    const query = `SELECT id, username, name FROM users WHERE role = ?`;
 
     db.query(query, ['guru'], (err, results) => {
         if (err) {
@@ -243,6 +373,36 @@ router.get('/teachers', verifyToken, isAdmin, (req, res) => {
         res.json(results);
     });
 });
+
+router.put('/teachers/:id', verifyToken, isAdmin, (req, res) => {
+    const { id } = req.params;
+    const { name, username } = req.body;
+
+    if (!name || !username) {
+        return res.status(400).json({ message: 'Nama dan username wajib diisi' });
+    }
+
+    const query = `
+        UPDATE users 
+        SET name = ?, username = ? 
+        WHERE id = ? AND role = "guru"
+    `;
+
+    db.query(query, [name, username, id], (err, results) => {
+        if (err) {
+            console.error('Database Query Error:', err.message);
+            return res.status(500).json({ message: 'Gagal memperbarui data guru', error: err.message });
+        }
+
+        if (results.affectedRows === 0) {
+            return res.status(404).json({ message: 'Guru tidak ditemukan atau tidak memiliki role guru' });
+        }
+
+        res.json({ message: 'Data guru berhasil diperbarui' });
+    });
+});
+
+
 
 
 

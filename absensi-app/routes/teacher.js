@@ -1,6 +1,7 @@
 const express = require('express');
 const db = require('../config/db');
 const { verifyToken, isGuru } = require('../middleware/auth');
+const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
 
 const router = express.Router();
 
@@ -42,6 +43,7 @@ router.get('/students/:classId', verifyToken, isGuru, (req, res) => {
     });
 });
 
+// POST - Tambah data absensi
 router.post('/attendance', verifyToken, isGuru, (req, res) => {
     const { attendance } = req.body;
 
@@ -49,7 +51,6 @@ router.post('/attendance', verifyToken, isGuru, (req, res) => {
         return res.status(400).json({ message: 'Attendance data is required' });
     }
 
-    const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
     let values = [];
 
     attendance.forEach(item => {
@@ -72,18 +73,53 @@ router.post('/attendance', verifyToken, isGuru, (req, res) => {
         values.push([student_id, subject_id, class_id, date, day, status]);
     });
 
-    const query = `
-        INSERT INTO attendance (student_id, subject_id, class_id, date, day, status)
-        VALUES ?
-    `;
-
-    db.query(query, [values], (err, results) => {
+    // Cek apakah siswa sudah diabsen pada hari yang sama
+    const checkQuery = `SELECT * FROM attendance WHERE student_id = ? AND date = ?`;
+    db.query(checkQuery, [values[0][0], values[0][3]], (err, results) => {
         if (err) {
-            return res.status(500).json({ message: 'Error recording attendance', error: err });
+            return res.status(500).json({ message: 'Error checking attendance', error: err });
         }
-        res.json({ message: 'Attendance recorded successfully' });
+        if (results.length > 0) {
+            return res.status(400).json({ message: 'Hari Ini Sudah Di Absen' });
+        }
+
+        // Jika belum ada, insert ke database
+        const insertQuery = `INSERT INTO attendance (student_id, subject_id, class_id, date, day, status) VALUES ?`;
+        db.query(insertQuery, [values], (err, results) => {
+            if (err) {
+                return res.status(500).json({ message: 'Error recording attendance', error: err });
+            }
+            res.json({ message: 'Attendance recorded successfully' });
+        });
     });
 });
+
+router.put('/attendance/:id', verifyToken, isGuru, (req, res) => {
+    const { id } = req.params;
+    const { status } = req.body;
+
+    // Pastikan status yang dikirimkan valid
+    const validStatus = ['hadir', 'alpha', 'izin', 'sakit'];
+    if (!validStatus.includes(status)) {
+        return res.status(400).json({ message: 'Invalid attendance status' });
+    }
+
+    // Cek apakah absensi dengan ID tersebut ada
+    db.query('SELECT * FROM attendance WHERE id = ?', [id], (err, results) => {
+        if (err) return res.status(500).json({ message: 'Database error', error: err });
+        if (results.length === 0) {
+            return res.status(404).json({ message: 'Attendance record not found' });
+        }
+
+        // Update hanya status absensi
+        db.query('UPDATE attendance SET status = ? WHERE id = ?', [status, id], (err, updateResults) => {
+            if (err) return res.status(500).json({ message: 'Failed to update attendance', error: err });
+
+            res.json({ message: 'Attendance updated successfully' });
+        });
+    });
+});
+
 
 // 🔹 Guru melihat daftar kelas & mata pelajaran yang dia ajar
 router.get('/assigned-subjects', verifyToken, isGuru, (req, res) => {
@@ -153,6 +189,36 @@ router.get('/attendance-history/:classId', verifyToken, isGuru, (req, res) => {
     });
 });
 
+router.get('/name', verifyToken, (req, res) => {
+    const { username, role } = req.user; // Ambil username & role dari token
+
+    db.query('SELECT name FROM users WHERE username = ? AND role = ?', [username, role], (err, results) => {
+        if (err) return res.status(500).json({ message: 'Database error', error: err });
+
+        if (results.length === 0) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        res.json({ name: results[0].name }); // Hanya mengembalikan name
+    });
+});
+
+router.put('/user/update-name', verifyToken, (req, res) => {
+    const { name } = req.body;
+    const userId = req.user.id; // Ambil ID user dari token
+
+    if (!name) {
+        return res.status(400).json({ message: 'Name is required' });
+    }
+
+    // Update hanya kolom name berdasarkan user yang sedang login
+    db.query('UPDATE users SET name = ? WHERE id = ?', [name, userId], (err, results) => {
+        if (err) {
+            return res.status(500).json({ message: 'Failed to update name', error: err });
+        }
+        res.json({ message: 'Name updated successfully' });
+    });
+});
 
 
 
