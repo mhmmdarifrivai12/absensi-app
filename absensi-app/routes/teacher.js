@@ -73,26 +73,16 @@ router.post('/attendance', verifyToken, isGuru, (req, res) => {
         values.push([student_id, subject_id, class_id, date, day, status]);
     });
 
-    // Cek apakah siswa sudah diabsen pada hari yang sama
-    const checkQuery = `SELECT * FROM attendance WHERE student_id = ? AND date = ?`;
-    db.query(checkQuery, [values[0][0], values[0][3]], (err, results) => {
+    // Insert langsung tanpa pengecekan, memungkinkan absen kapan saja per mata pelajaran
+    const insertQuery = `INSERT INTO attendance (student_id, subject_id, class_id, date, day, status) VALUES ?`;
+    db.query(insertQuery, [values], (err, results) => {
         if (err) {
-            return res.status(500).json({ message: 'Error checking attendance', error: err });
+            return res.status(500).json({ message: 'Error recording attendance', error: err });
         }
-        if (results.length > 0) {
-            return res.status(400).json({ message: 'Hari Ini Sudah Di Absen' });
-        }
-
-        // Jika belum ada, insert ke database
-        const insertQuery = `INSERT INTO attendance (student_id, subject_id, class_id, date, day, status) VALUES ?`;
-        db.query(insertQuery, [values], (err, results) => {
-            if (err) {
-                return res.status(500).json({ message: 'Error recording attendance', error: err });
-            }
-            res.json({ message: 'Attendance recorded successfully' });
-        });
+        res.json({ message: 'Attendance recorded successfully' });
     });
 });
+
 
 router.put('/attendance/:id', verifyToken, isGuru, (req, res) => {
     const { id } = req.params;
