@@ -8,7 +8,7 @@ require('dotenv').config();
 const router = express.Router();
 
 // Registrasi pengguna baru
-router.post('/register', verifyToken, isAdmin, (req, res) => {
+router.post('/register', (req, res) => {
     const { name, username, password, role } = req.body;
 
     if (!name || !username || !password || !role) {
