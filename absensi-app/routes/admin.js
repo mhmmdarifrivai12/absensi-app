@@ -289,6 +289,7 @@ router.post('/assign-teacher', verifyToken, isAdmin, (req, res) => {
 router.get('/teachers-schedule', verifyToken, isAdmin, (req, res) => {
     const query = `
         SELECT 
+            tcs.id AS id, 
             u.name AS teacher_name, 
             c.name AS class_name, 
             s.name AS subject_name,
@@ -402,6 +403,39 @@ router.put('/teachers/:id', verifyToken, isAdmin, (req, res) => {
     });
 });
 
+// Ambil semua data user - hanya admin
+router.get('/users', verifyToken, isAdmin, (req, res) => {
+    const query = `SELECT id, name, username, role FROM users ORDER BY id ASC`;
+
+    db.query(query, (err, results) => {
+        if (err) {
+            console.error('Database Error:', err);
+            return res.status(500).json({ message: 'Gagal mengambil data user', error: err });
+        }
+
+        res.json(results);
+    });
+});
+
+// Hapus user berdasarkan ID - hanya admin
+router.delete('/users/:id', verifyToken, isAdmin, (req, res) => {
+    const { id } = req.params;
+
+    const query = `DELETE FROM users WHERE id = ?`;
+
+    db.query(query, [id], (err, result) => {
+        if (err) {
+            console.error('Gagal menghapus user:', err);
+            return res.status(500).json({ message: 'Gagal menghapus user', error: err });
+        }
+
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ message: 'User tidak ditemukan' });
+        }
+
+        res.json({ message: 'User berhasil dihapus' });
+    });
+});
 
 
 

@@ -27,7 +27,7 @@ app.use("/api/public", publicRoutes);
 
 // Default Route
 app.get("/", (req, res) => {
-    res.json({ message: "Hello from Vercel API! update 3" });
+    res.json({ message: "Hello from Vercel API! update 4" });
 });
 
 // Global Error Handling Middleware
