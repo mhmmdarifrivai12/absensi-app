@@ -164,8 +164,8 @@ Sistem ini digunakan untuk absensi dan monitoring kegiatan belajar mengajar di s
 - **Lihat Nama Guru (GET)** `api/teacher/name`
 - **Ubah Nama Guru (PUT)** `api/teacher/user/update-name`
 - **Lihat Kelas (GET)** `api/teacher/assigned-classes`
-- **Lihat Kelas (GET)** `api/teacher/students/ ${classId}`
-- 
+- **Nampilin siswa (GET)** `api/teacher/students/ ${classId}`
+- **Nampilin History (GET)** `api/teacher/attendance-history/${classId}`
 ```json
 {
   "name": "Akhfee Lauki Update"
