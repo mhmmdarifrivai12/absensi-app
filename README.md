@@ -2,6 +2,162 @@
 
 Sistem ini digunakan untuk absensi dan monitoring kegiatan belajar mengajar di sekolah dengan peran Admin dan Guru.
 
+## REVISI
+
+#### 1. Register (POST)
+**Endpoint:** `api/auth/register`
+```json
+{
+    "name": "Guru2",
+    "password": "guru",
+    "role": "guru"
+}
+```
+#### 2. Login (POST)
+**Endpoint:** `api/auth/login`
+```json
+{
+    "id": "001",
+    "password": "admin"
+}
+
+```
+#### 3. DASHBOARD GURU HISTORY RANGE TANGGAL (GET)
+- **Endpoint:** `api/teacher/attendance-history/:classId/:subjectId/:startDate?/:endDate?`
+- **Endpoint Contoh:** `api/teacher/attendance-history/62/50/2025-04-01/2026-04-30`
+##### NOTES : untuk input tanggal opsional jadi tetap bisa walaupun ga input tanggal tampilan kelas tetap muncul ga mesti input tanggal
+```json
+{
+    "2025-08-01 (Rabu)": [
+        {
+            "id": 3,
+            "student_name": "ANISAH",
+            "status": "Izin"
+        }
+    ],
+    "2025-04-30 (Senin)": [
+        {
+            "id": 1,
+            "student_name": "ALWANSYAH DIFFAREL",
+            "status": "Izin"
+        }
+    ],
+    "2025-04-01 (Selasa)": [
+        {
+            "id": 2,
+            "student_name": "AMANDA ELFARIANI",
+            "status": "Hadir"
+        }
+    ]
+}
+
+```
+#### 4. DASHBOARD GURU REKAP ABSEN BY KELAS YANG DIAJAR (GET)
+- **Endpoint Contoh :** `api/teacher/attendance-recap/:classId/:startDate/:endDate`
+- **Endpoint Contoh :** `api/teacher/attendance-recap/62/2025-04-01/2026-04-30`
+```json
+{
+    "ALWANSYAH DIFFAREL": {
+        "hadir": 0,
+        "izin": 1,
+        "sakit": 0,
+        "alpha": 0,
+        "dispen": 0
+    },
+    "AMANDA ELFARIANI": {
+        "hadir": 1,
+        "izin": 0,
+        "sakit": 0,
+        "alpha": 0,
+        "dispen": 0
+    },
+    "ANISAH": {
+        "hadir": 0,
+        "izin": 1,
+        "sakit": 0,
+        "alpha": 0,
+        "dispen": 0
+    }
+}
+
+```
+#### 5. DASHBOARD ADMIN REKAP ABSEN (GET)
+- **Endpoint :** `api/admin/attendance-recap/:startDate/:endDate`
+- **Endpoint Contoh:** `api/admin/attendance-recap/2025-04-01/2026-04-30`
+```json
+{
+    "11 F1": {
+        "ALWANSYAH DIFFAREL": {
+            "hadir": 0,
+            "izin": 1,
+            "sakit": 0,
+            "alpha": 0,
+            "dispen": 0
+        },
+        "AMANDA ELFARIANI": {
+            "hadir": 1,
+            "izin": 0,
+            "sakit": 0,
+            "alpha": 0,
+            "dispen": 0
+        },
+        "ANISAH": {
+            "hadir": 0,
+            "izin": 1,
+            "sakit": 0,
+            "alpha": 0,
+            "dispen": 0
+        }
+    },
+    "11 F3": {
+        "AULIA AZZAHRA": {
+            "hadir": 0,
+            "izin": 0,
+            "sakit": 0,
+            "alpha": 1,
+            "dispen": 0
+        }
+    }
+}
+
+```
+#### 6. DASHBOARD ADMIN History (GET)
+- **Endpoint :** `api/admin/attendance-history`
+- **Endpoint Contoh:** `api/admin/attendance-history?classId=62&subjectId=50&startDate=2025-04-01&endDate=2026-04-01`
+- kirim value ke parameter valid (classId, subjectId, startDate, endDate)
+```json
+[
+    {
+        "id": 3,
+        "date": "2025-07-31T17:00:00.000Z",
+        "day": "Rabu",
+        "student_name": "ANISAH",
+        "status": "Izin",
+        "class_id": 62,
+        "subject_id": 50
+    },
+    {
+        "id": 1,
+        "date": "2025-04-29T17:00:00.000Z",
+        "day": "Senin",
+        "student_name": "ALWANSYAH DIFFAREL",
+        "status": "Izin",
+        "class_id": 62,
+        "subject_id": 50
+    },
+    {
+        "id": 2,
+        "date": "2025-03-31T17:00:00.000Z",
+        "day": "Selasa",
+        "student_name": "AMANDA ELFARIANI",
+        "status": "Hadir",
+        "class_id": 62,
+        "subject_id": 50
+    }
+]
+
+```
+
 ## API Endpoint
 
 ### Autentikasi
@@ -163,9 +319,6 @@ Sistem ini digunakan untuk absensi dan monitoring kegiatan belajar mengajar di s
 - **Lihat Kelas dan Mata Pelajaran yang Diajarkan (GET)** `api/teacher/assigned-subjects`
 - **Lihat Nama Guru (GET)** `api/teacher/name`
 - **Ubah Nama Guru (PUT)** `api/teacher/user/update-name`
-- **Lihat Kelas (GET)** `api/teacher/assigned-classes`
-- **Nampilin siswa (GET)** `api/teacher/students/ ${classId}`
-- **Nampilin History (GET)** `api/teacher/attendance-history/${classId}`
 ```json
 {
   "name": "Akhfee Lauki Update"
