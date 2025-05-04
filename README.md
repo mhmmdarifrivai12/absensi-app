@@ -157,6 +157,24 @@ Sistem ini digunakan untuk absensi dan monitoring kegiatan belajar mengajar di s
 ]
 
 ```
+#### 7. DASHBOARD ADMIN Jadwal Guru (GET)
+- **Endpoint :** `api/admin/teachers-schedule-filter`
+- **Endpoint Contoh:** `/api/admin/teachers-schedule-filter?classId=2`
+- **Endpoint Contoh:** `/api/admin/teachers-schedule-filter?teacherId=5&teachingDay=Senin`
+- **Endpoint Contoh:** `/api/admin/teachers-schedule-filter?classId=2&teacherId=5&teachingDay=Senin`
+```json
+[
+    {
+        "id": 182,
+        "teacher_name": "Apriyani, S.Pd (F)",
+        "class_name": "11 F5",
+        "subject_name": "Fisika",
+        "teaching_day": "Kamis",
+        "start_time": "11:15",
+        "duration": 135
+    }
+]
+```
 
 ## API Endpoint
 
